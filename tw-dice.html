@@ -1,0 +1,821 @@
+<!-- MIT License
+
+Copyright (c) 2021 Nia, Horizon, Thrall Wars Mod
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<!doctype html>
+<html lang="">
+
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="theme-color" content="#fafafa">
+    <!-- Pretty material icons via google CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+
+        html {
+            font-family: "Calibri", serif;
+        }
+
+        body {
+            margin: 0px;
+            overflow: hidden;
+            background: url("https://aws1.discourse-cdn.com/funcom/original/1X/6f45dd8c9a5cb28b8cf68908472b4a2cabd41382.jpg") no-repeat 50% 50% fixed
+        }
+
+        #content-outlet {
+            height: 100vh;
+        }
+
+        .dice-content {
+            padding-left: 24px;
+            padding-top: 24px;
+            height: calc(100vh - 24px);
+            width: 450px;
+            color: white;
+            background-color: rgba(117, 117, 117, 0.9);
+            font-weight: bolder;
+            font-size: 11pt;
+            border-right: 3px solid #474747;
+        }
+
+        .character-content {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: white;
+            width: 100%;
+            padding-left: 32px;
+            padding-top: 8px;
+            height: calc(100vh - 24px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .major-attributes-table {
+        }
+
+        .major-attributes-table tr {
+        }
+
+        .major-attributes-table td {
+        }
+
+        .skills-table {
+        }
+
+        .icon-button {
+            width: 21px;
+            padding: 4px;
+            height: 21px;
+            display: flex;
+            align-items: center;
+            align-content: center;
+            justify-content: center;
+            background-color: dimgrey;
+            border: 1px solid black;
+            font-size: 20px;
+        }
+
+        .icon-button:hover {
+            cursor: pointer;
+            background-color: grey;
+        }
+
+        .icon-button:disabled {
+            background-color: dimgrey;
+            cursor: not-allowed;
+        }
+
+        .aligned-center {
+            display: flex;
+            align-items: center;
+            align-content: center;
+            justify-content: center;
+        }
+
+        .settings-dialog-background {
+            background-color: rgba(0, 0, 0, 0.90);
+            z-index: 50;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+        }
+
+        .settings-dialog {
+            position: fixed;
+            background-color: dimgrey;
+            color: white;
+            border-radius: 4px;
+            border: 0.0625rem solid #8d8c8c;
+            top: calc(100vh / 2 - 150px);
+            left: calc(100vw / 2 - 300px);
+            z-index: 100;
+            min-width: 600px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-dialgo-header {
+            padding-left: 16px;
+            height: 48px;
+            border-bottom: 1px solid #a0a0a0;
+            margin-bottom: 8px;
+            font-size: 16pt;
+            font-weight: bolder;
+            display: flex;
+        }
+
+        .settings-dialog-footer {
+            border-top: 1px solid #a0a0a0;
+            margin-top: auto;
+            height: 48px;
+        }
+
+        .settings-dialgo-content {
+            padding: 16px;
+        }
+
+        .close-button {
+            width: 120px;
+            height: 24px;
+            cursor: pointer;
+            background-color: dimgrey;
+            border: 1px solid black;
+            font-size: 16px;
+        }
+
+        .close-button:hover {
+            cursor: pointer;
+            background-color: grey;
+        }
+
+        .attribute-selected {
+            color: #d06721;
+        }
+    </style>
+    <script type="application/ecmascript">
+        function majorAttribute(key, name, initialValue) {
+            return {
+                key,
+                name,
+                initialValue,
+                currentValue: initialValue,
+                selected: false,
+            }
+        }
+
+        function skill(key, name, initialValue, affectedByAttribute) {
+            return {
+                key,
+                name,
+                initialValue,
+                affectedByAttribute,
+                addedPoints: 0
+            }
+        }
+
+        function attributeMapping(testFn, text) {
+            return {
+                testFn,
+                text
+            }
+        }
+
+        // Texts by Horizon, they describe your character based on the attributes.
+        const textStrength0 = 'Physically weak, unable to handle themselves in any contest of strength.';
+        const textStrength1 = 'An Average Person. Can handle themselves but will struggle with most feats of strength.';
+        const textStrength2 = 'Experienced manual labourers. Has some muscle definition.';
+        const textStrength3 = 'Physical training is probably a daily practice. Noticable muscle definition and size. Most warriors and physically demanding artisans.';
+        const textStrength4 = 'The peak of human ability. Notably large and covered in muscles. Strogmen/women. Physical training and ability is most likely a daily chore.';
+        const textStrength5 = 'Strength that goes beyond human. Half-giants and the supernatural or otherwise artificially enhanced.';
+        const textStrength6 = 'Strength that goes beyond supernatural. You are Japata.';
+        const textDexterity0 = 'Slow and clumsy, reactions seem sluggish and delayed, probably falls over a lot. Might break their back if they bend over too quickly.';
+        const textDexterity1 = 'An average person. Can walk down a street without falling, can catch objects thrown at them sometimes. Can touch their own toes after some stretching.';
+        const textDexterity2 = 'An average warrior. Slightly heightened reactions. Boasts some flexibility and coordination. Probably perform delicate tasks with their hands.';
+        const textDexterity3 = 'Archers, Dancers most rogues. Notably fast to react and quick. Able to maintain their footing on unfavourable terrain. Can hit moving targets with ranged weapons consistently. Probably knows how to juggle.';
+        const textDexterity4 = 'Acrobats. Master thieves. Assassins. Reacts to events almost instantly, frequently performs impressive feats of agility. Can bend their body in ways that inspire awe and shivers in the eyes of regular people. Definitely knows how to juggle.';
+        const textDexterity5 = 'Inhuman reaction speeds. Time is perceived slower, flows like water without a single wasted movement.';
+        const textConstitution0 = 'Vulnerable and delicate. Bones break easily, gets drunk off one glass of wine. Injuries take a long time to recover. Gets sick easily. Easily fatigued.';
+        const textConstitution1 = 'Average person. Bones break on occasion, gets drunk after a couple. Recovers at a reasonable pace and gets sick occasionally. Gets tired after a days work.';
+        const textConstitution2 = 'Hardy. Can take a hit or two without falling unconscious Drinks heartily but probably stumbles home. Can endure minor illness Still has energy to spare after a day\'s work.';
+        const textConstitution3 = 'Enduring. Is used to taking blows and can shrug most off. Needs to drink large quantities to get drunk. Shrugs off minor illnesses and endures major ones. Can do a full days work without being phased.';
+        const textConstitution4 = 'Juggernaut. Probably doesn’t even notice most minor blows. Drinks taverns dry regularly. Rarely gets ill, and ignores all but the most serious of illness. Seems to have limitless energy.';
+        const textConstitution5 = 'Inhuman resistance. Probably undead or otherwise modified. Doesn’t feel pain, doesn’t get drunk no matter how much they drink. Probably has no need for sleep.';
+        const textIntelligence0 = 'Slow and dimwitted. Complex problems confuse and frustrate them. Forgets things frequently.';
+        const textIntelligence1 = 'Average. Knows what they need to know to get by. Struggles with complex concepts, forgets unimportant things relatively frequently.';
+        const textIntelligence2 = 'Knows a bit more than the average person. Can wrestle with complex concepts eventually. Remembers most things but forgets details.';
+        const textIntelligence3 = 'Intelligent. Scholarly or other academic profession. Comprehends complex concepts with some focus. Remember most things of relevance but can overlook minor details at times.';
+        const textIntelligence4 = 'Genius. An expert in their field. Comprehends complex concepts with ease. Has an almost photographic memory.';
+        const textIntelligence5 = 'Human computer. Processes complex concepts in seconds, remembers and stores information with pinpoint accuracy. ';
+        const textWisdom0 = 'Dimwitted and obtuse. Makes bad decisions regularly. Has little to no read on people or situations. Mentally weak and easily manipulated.';
+        const textWisdom1 = 'Average. Makes good decisions most of the time. Can pick up on social cues and can identify obvious danger. Can be manipulated.';
+        const textWisdom2 = 'Decent decision makers. Can read people’s emotions on occasion. Able to identify dishonesty at times. Tricky to manipulate.';
+        const textWisdom3 = 'Good decision making skills, Acutely aware of the emotions of others. Able to see through deception consistently. Difficult to manipulate.';
+        const textWisdom4 = 'Wise. Others come to this character for guidance. Can read people like a book. Almost impossible to manipulate.';
+        const textWisdom5 = 'Impossibly empathetic, Can see into people\'s souls and read their hearts desires. Has a sixth sense for danger and deception.';
+        const textCharisma0 = 'Easily disliked. Perhaps disfigured, stumbles over their own words and speaks poorly.';
+        const textCharisma1 = 'Average, can string sentences together. Might have some physical imperfections but nothing overly off putting. Probably fades into the background in social settings.';
+        const textCharisma2 = 'Decently eloquent. Can string sentences together and perhaps use emphasis and clever word choice to keep people\'s attention. May be somewhat pretty and pleasant to be around, but nothing exceptional.';
+        const textCharisma3 = 'Charming. Speaks well relative to their culture. Probably has little issue being in the public eye. Physically attractive and easy to like.';
+        const textCharisma4 = 'A paragon of wit and charm. Always knows what to say and how to say it, Thrives in the public eye and can talk their way out of most situations. Exhume an aura of confidence.';
+        const textCharisma5 = 'Unnaturally charming. Hypnotic in nature. People hang off their every word and get lost in their eyes. There is most likely another supernatural force in play for someone to be so convincing.';
+
+        const KEY_STR = 'Strength';
+        const KEY_DEX = 'Dexterity';
+        const KEY_CONST = 'Constitution';
+        const KEY_INT = 'Intelligence';
+        const KEY_WIS = 'Wisdom';
+        const KEY_CHAR = 'Charisma';
+
+        // Maps attribute keys to texts
+        const attributeToTextMapping = {
+            [KEY_STR]: {
+                texts: [
+                    attributeMapping(p => p <= 9, textStrength0),
+                    attributeMapping(p => p === 10, textStrength1),
+                    attributeMapping(p => p === 11 || p === 12, textStrength2),
+                    attributeMapping(p => p === 13 || p === 14, textStrength3),
+                    attributeMapping(p => p === 15 || p === 16, textStrength4),
+                    attributeMapping(p => p >= 17 && p <= 19, textStrength5),
+                    attributeMapping(p => p >= 20, textStrength6),
+                ],
+                icon: '<span onclick="handleStrengthClick()" class="material-icons">fitness_center</span>'
+            },
+            [KEY_DEX]: {
+                texts: [
+                    attributeMapping(p => p <= 9, textDexterity0),
+                    attributeMapping(p => p === 10, textDexterity1),
+                    attributeMapping(p => p === 11 || p === 12, textDexterity2),
+                    attributeMapping(p => p === 13 || p === 14, textDexterity3),
+                    attributeMapping(p => p === 15 || p === 16, textDexterity4),
+                    attributeMapping(p => p >= 17, textDexterity5),
+                ],
+                icon: '<span class="material-icons">bolt</span>'
+            },
+            [KEY_CONST]: {
+                texts: [
+                    attributeMapping(p => p <= 9, textConstitution0),
+                    attributeMapping(p => p === 10, textConstitution1),
+                    attributeMapping(p => p === 11 || p === 12, textConstitution2),
+                    attributeMapping(p => p === 13 || p === 14, textConstitution3),
+                    attributeMapping(p => p === 15 || p === 16, textConstitution4),
+                    attributeMapping(p => p >= 17, textConstitution5),
+                ],
+                icon: '<span class="material-icons">directions_run</span>'
+            },
+            [KEY_INT]: {
+                texts: [
+                    attributeMapping(p => p <= 9, textIntelligence0),
+                    attributeMapping(p => p === 10, textIntelligence1),
+                    attributeMapping(p => p === 11 || p === 12, textIntelligence2),
+                    attributeMapping(p => p === 13 || p === 14, textIntelligence3),
+                    attributeMapping(p => p === 15 || p === 16, textIntelligence4),
+                    attributeMapping(p => p >= 17, textIntelligence5),
+                ],
+                icon: '<span class="material-icons">tungsten</span>'
+            },
+            [KEY_WIS]: {
+                texts: [
+                    attributeMapping(p => p <= 9, textWisdom0),
+                    attributeMapping(p => p === 10, textWisdom1),
+                    attributeMapping(p => p === 11 || p === 12, textWisdom2),
+                    attributeMapping(p => p === 13 || p === 14, textWisdom3),
+                    attributeMapping(p => p === 15 || p === 16, textWisdom4),
+                    attributeMapping(p => p >= 17, textWisdom5)
+                ],
+                icon: '<span class="material-icons">menu_book</span>'
+            },
+            [KEY_CHAR]: {
+                texts: [
+                    attributeMapping(p => p <= 9, textCharisma0),
+                    attributeMapping(p => p === 10, textCharisma1),
+                    attributeMapping(p => p === 11 || p === 12, textCharisma2),
+                    attributeMapping(p => p === 13 || p === 14, textCharisma3),
+                    attributeMapping(p => p === 15 || p === 16, textCharisma4),
+                    attributeMapping(p => p >= 17, textCharisma5),
+                ],
+                icon: '<span onclick="handleHeartClick()" style="cursor: pointer" class="material-icons">favorite</span>'
+            },
+        }
+
+        const appState = defaultAppState();
+
+        function defaultAppState() {
+            return {
+                maxAttributeLevel: 18,
+                availableAttributePoints: 27,
+                spentAttributePoints: 0,
+                majorAttributes: [
+                    majorAttribute(KEY_STR, 'Strength', 8),
+                    majorAttribute(KEY_DEX, 'Dexterity', 8),
+                    majorAttribute(KEY_CONST, 'Constitution', 8),
+                    majorAttribute(KEY_INT, 'Intelligence', 8),
+                    majorAttribute(KEY_WIS, 'Wisdom', 8),
+                    majorAttribute(KEY_CHAR, 'Charisma', 8),
+                ],
+                maxExtraSkillPoints: 3,
+                availableSkillPoints: 20    ,
+                spentSkillPoints: 0,
+                skills: [
+                    skill('alchemy', 'Alchemy', -1, KEY_INT),
+                    skill('Athletics', 'Athletics', -1, KEY_STR),
+                    skill('Bluff', 'Bluff', -1, KEY_CHAR),
+                    skill('Diplomacy', 'Diplomacy', -1, KEY_CHAR),
+                    skill('Disguise', 'Disguise', -1, KEY_CHAR),
+                    skill('EscapeArtist', 'Escape Artist', -1, KEY_DEX),
+                    skill('Forgery', 'Forgery', -1, KEY_INT),
+                    skill('HandToHand', 'Hand to hand combat', -1, KEY_STR),
+                    skill('HandleAnimal', 'Handle Animal', -1, KEY_CHAR),
+                    skill('Heal', 'Heal', -1, KEY_WIS),
+                    skill('Intimidate', 'Intimidate', -1, KEY_CHAR),
+                    skill('Perception', 'Perception', -1, KEY_WIS),
+                    skill('Perform', 'Perform', -1, KEY_CHAR),
+                    skill('PickLock', 'Pick Lock', -1, KEY_DEX),
+                    skill('PickPocket', 'Pick Pocket', -1, KEY_DEX),
+                    skill('SenseMotive', 'Sense Motive', -1, KEY_WIS),
+                    skill('Sorcery', 'Sorcery', -1, KEY_INT),
+                    skill('Stealth', 'Stealth', -1, KEY_DEX),
+                    skill('Tumble', 'Tumble', -1, KEY_DEX),
+                    skill('Willpower', 'Willpower', -1, KEY_WIS),
+                ],
+                settingsOpen: false,
+            }
+        }
+
+        // Adds the ' tick to a value so it can be rendered as function param
+        function asParameter(value) {
+            return `'${value}'`;
+        }
+
+        function resetSkillPoints() {
+            const defaultState = defaultAppState();
+            appState.skills = defaultState.skills;
+            appState.availableSkillPoints = defaultState.availableSkillPoints;
+            appState.spentSkillPoints = defaultState.spentSkillPoints;
+            reRender();
+        }
+
+        function resetAttributePoints() {
+            const defaultState = defaultAppState();
+            appState.majorAttributes = defaultState.majorAttributes;
+            appState.availableAttributePoints = defaultState.availableAttributePoints;
+            appState.spentAttributePoints = defaultState.spentAttributePoints;
+            reRender();
+        }
+
+        function toggleSettingsOpen() {
+            appState.settingsOpen = !appState.settingsOpen;
+            reRender();
+        }
+
+        function closeSettings() {
+            appState.settingsOpen = false;
+            reRender();
+        }
+
+        function increaseMajorAttribute(key) {
+            const majorAttribute = appState.majorAttributes.find(value => value.key === key);
+            if (majorAttribute) {
+                const requiredPoints = calculateRequiredAttributes(majorAttribute)
+                appState.spentAttributePoints += requiredPoints;
+                majorAttribute.currentValue += 1;
+            }
+            reRender();
+        }
+
+        function decreaseMajorAttribute(key) {
+            const majorAttribute = appState.majorAttributes.find(value => value.key === key);
+            if (majorAttribute) {
+                const requiredPoints = calculateReturnedAttributes(majorAttribute)
+                appState.spentAttributePoints -= requiredPoints;
+                majorAttribute.currentValue -= 1;
+            }
+            reRender();
+        }
+
+        function selectAttribute(key) {
+            const majorAttribute = appState.majorAttributes.find(value => value.key === key);
+            if (majorAttribute) {
+                majorAttribute.selected = !majorAttribute.selected;
+                reRender();
+            }
+        }
+
+        function increaseSkill(key) {
+            appState.spentSkillPoints += 1;
+            const skill = appState.skills.find(value => value.key === key);
+            if (skill) {
+                skill.addedPoints += 1;
+            }
+            reRender();
+        }
+
+        function decreaseSkill(key) {
+            appState.spentSkillPoints -= 1;
+            const skill = appState.skills.find(value => value.key === key);
+            if (skill) {
+                skill.addedPoints -= 1;
+            }
+            reRender();
+        }
+
+        function handleMaxAttributeLevelChange(id) {
+            const value = document.getElementById(id).value;
+            appState.maxAttributeLevel = value;
+            reRender();
+        }
+
+        function handleMaxAdditionalSkillPointsChange(id) {
+            const value = document.getElementById(id).value;
+            appState.maxExtraSkillPoints = value;
+            reRender();
+        }
+
+        function handleRainbowFlagClick() {
+            // Most important feature
+            attributeToTextMapping[KEY_CHAR].icon = '<span style="cursor: pointer" onclick="handleHeartClick()" class="material-icons">favorite</span>';
+            reRender();
+        }
+
+        function handleSnakeClick() {
+            // Most important feature
+            attributeToTextMapping[KEY_STR].icon = '<span style="cursor: pointer" onclick="handleStrengthClick()" class="material-icons">fitness_center</span>';
+            reRender();
+        }
+
+        function handleHeartClick() {
+            // Most important feature
+            attributeToTextMapping[KEY_CHAR].icon = `
+                <span   onclick="handleRainbowFlagClick()"
+                         unselectable="on"
+                         onselectstart="return false;"
+                         onmousedown="return false;"
+                        style="cursor: pointer; font-size: 18.5px; -moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;">🏳️‍🌈</span>`
+            reRender();
+        }
+
+        function handleStrengthClick() {
+            // Most important feature
+            attributeToTextMapping[KEY_STR].icon = `
+                <span   onclick="handleSnakeClick()"
+                         unselectable="on"
+                         onselectstart="return false;"
+                         onmousedown="return false;"
+                        style="cursor: pointer; font-size: 18.5px; -moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;">🐍</span>`
+            reRender();
+        }
+
+        function getAttributeByKey(allAttributes, key) {
+            const attribute = allAttributes.find(attribute => attribute.key ===  key);
+            if (!attribute) {
+                throw new Error('Failed to find affecting attrbiute ' + attribute + '!');
+            }
+            return attribute;
+        }
+
+
+        // Calculates the skill gain for a skill based on it's attribute
+        function calculateSkillGain(attributes, skill) {
+            const attributeKey = skill.affectedByAttribute;
+            // First we search for the attribute
+            const affectingAttribute = getAttributeByKey(attributes, attributeKey)
+            const currentAttributeValue = affectingAttribute.currentValue;
+            // Less than 10 gives you no boost at all
+            if (currentAttributeValue < 10) {
+                return 0;
+            }
+            // If you have 18, you get +4
+            // 17 gets you +3
+            // 16 gets you +3
+            // 15 gets you +2 and so on
+            return Math.ceil(((currentAttributeValue + 1) - 10) / 2);
+        }
+
+        const requiredAttributePoints = {
+            '1_POINT': 12,
+            '2_POINT': 14,
+            '3_POINT': 16,
+        }
+
+        function calculateRequiredAttributes(majorAttribute) {
+            const currentValue = majorAttribute.currentValue;
+            if (currentValue <= requiredAttributePoints["1_POINT"]) {
+                return 1;
+            }
+            if (currentValue <= requiredAttributePoints["2_POINT"]) {
+                return 2;
+            }
+            if (currentValue <= requiredAttributePoints["3_POINT"]) {
+                return 3;
+            }
+            return 4;
+        }
+
+        function calculateReturnedAttributes(majorAttribute) {
+            const currentValue = majorAttribute.currentValue;
+            if (currentValue <= (requiredAttributePoints["1_POINT"] + 1)) {
+                return 1;
+            }
+            if (currentValue <= (requiredAttributePoints["2_POINT"] + 1)) {
+                return 2;
+            }
+            if (currentValue <= (requiredAttributePoints["3_POINT"] + 1)) {
+                return 3;
+            }
+            return 4;
+        }
+
+        function calculateCurrentAttributePoints(majorAttribute) {
+            return majorAttribute.currentValue;
+        }
+
+        function calculateCurrentSkillPoints(skill, allAttributes) {
+            // We take the skill value + what we added + what attributes add
+            return skill.initialValue + skill.addedPoints + calculateSkillGain(allAttributes, skill)
+        }
+
+        function canIncreaseAttribute(majorAttribute, remainingPoints, maxPoints) {
+            const currentPoints = calculateCurrentAttributePoints(majorAttribute);
+            const requiredAttributes = calculateRequiredAttributes(majorAttribute);
+            // We did hit the hard cap, no more increase
+            if (currentPoints >= maxPoints) {
+                return false;
+            }
+            return remainingPoints >= requiredAttributes;
+        }
+
+        function canIncreaseSkill(skill, remainingPoints, maxAddedPoints) {
+            // We did hit the hard cap, no more increase
+            if (skill.addedPoints >= maxAddedPoints) {
+                return false;
+            }
+            return remainingPoints > 0;
+        }
+
+        function canDecreaseAttribute(majorAttribute) {
+            return majorAttribute.currentValue > majorAttribute.initialValue;
+        }
+
+        function canDecreaseSkill(skill) {
+            return skill.addedPoints > 0;
+        }
+
+        function renderMajorAttribute(majorAttribute, remainingPoints, maxPoints) {
+            const currentValue = calculateCurrentAttributePoints(majorAttribute);
+            const keyParam = asParameter(majorAttribute.key);
+            const increaseDisabled = !canIncreaseAttribute(majorAttribute, remainingPoints, maxPoints)
+            const decreaseDisabled = !canDecreaseAttribute(majorAttribute, remainingPoints, maxPoints)
+            const increaseDisabledAttribute = increaseDisabled ? 'disabled' : ''
+            const decreaseDisabledAttribute = decreaseDisabled ? 'disabled' : ''
+            const cssClass = majorAttribute.selected ? 'attribute-selected': '';
+            return `
+            <tr class="${cssClass}">
+                <td style="width: 254px;">
+                    <span style="cursor: pointer" onclick="selectAttribute(${keyParam})">${majorAttribute.name}</span>
+                </td>
+                <td style="width: 40px">${currentValue}</td>
+                <td style="width: 40px"><button class="icon-button" type="button" ${increaseDisabledAttribute} onclick="increaseMajorAttribute(${keyParam})">+</button></td>
+                <td style="width: 40px"><button class="icon-button" type="button" ${decreaseDisabledAttribute} onclick="decreaseMajorAttribute(${keyParam})">-</button></td>
+            </tr>
+            `
+        }
+
+        function renderSkill(skill, remainingPoints, maxPoints, allAttributes) {
+            const currentSkillPointDisplay = calculateCurrentSkillPoints(skill, allAttributes);
+            const keyParam = asParameter(skill.key);
+            const increaseDisabled = !canIncreaseSkill(skill, remainingPoints, maxPoints)
+            const decreaseDisabled = !canDecreaseSkill(skill)
+            const increaseDisabledAttribute = increaseDisabled ? 'disabled' : '';
+            const decreaseDisabledAttribute = decreaseDisabled ? 'disabled' : '';
+            const attribute = getAttributeByKey(allAttributes, skill.affectedByAttribute)
+            const cssClass = attribute.selected ? 'attribute-selected': '';
+            return `
+            <tr>
+                <td class="${cssClass}" style="width: 254px">${skill.name}</td>
+                <td style="width: 40px">${currentSkillPointDisplay}</td>
+                <td style="width: 40px"><button class="icon-button" type="button" ${increaseDisabledAttribute} onclick="increaseSkill(${keyParam})">+</button></td>
+                <td style="width: 40px"><button class="icon-button" type="button" ${decreaseDisabledAttribute} onclick="decreaseSkill(${keyParam})">-</button></td>
+            </tr>
+            `
+        }
+
+        function renderCurrentAttributePoints(state) {
+            const remainingPoints = state.availableAttributePoints - state.spentAttributePoints;
+            return `<div style="display: flex; flex-direction: row">
+                        <span>Remaining Attributes: ${remainingPoints}</span>
+                         <button style="margin-left: auto; margin-right: 16px"
+                                onclick="toggleSettingsOpen()"
+                                class="icon-button">
+                                <span class="material-icons">settings</span>
+                        </button>
+                        <button style="margin-right: 16px"
+                                onclick="resetAttributePoints()"
+                                class="icon-button">
+                                <span class="material-icons">restart_alt</span>
+                        </button>
+
+                    </div>`
+        }
+
+        function renderCurrentSkillPoints(state) {
+            const remainingPoints = state.availableSkillPoints - state.spentSkillPoints;
+            return `<div style="display: flex; flex-direction: row">
+                        <span>Remaining Skill Points: ${remainingPoints}</span>
+                        <button style="margin-left: auto; margin-right: 16px"
+                                onclick="resetSkillPoints()"
+                                class="icon-button"><span class="material-icons">restart_alt</span>
+                        </button>
+                    </div>`
+        }
+
+        function renderSkills(skills, remainingPoints, maxPoints, allAttributes) {
+            const tableRows = skills
+                .map(attribute => renderSkill(attribute, remainingPoints, maxPoints, allAttributes))
+                .join('\n')
+            return `
+            <table class="skills-table"
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+            `
+        }
+
+        function renderMajorAttributes(majorAttributes, remainingPoints, maxPoints) {
+            const tableRows = majorAttributes
+                .map(attribute => renderMajorAttribute(attribute, remainingPoints, maxPoints))
+                .join('\n')
+            return `
+            <table class="major-attributes-table"
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+            `
+        }
+
+        function renderAttributeText(majorAttribute) {
+            const currentValue = calculateCurrentAttributePoints(majorAttribute);
+            const key = majorAttribute.key;
+            let text = '??';
+            let icon = ''
+            if (attributeToTextMapping[key]) {
+                const val = attributeToTextMapping[key].texts.find(value => value.testFn(currentValue));
+                text = val.text;
+                icon = attributeToTextMapping[key].icon;
+                if (key === KEY_CHAR) {
+                    icon = `<div>${icon}</div>`;
+                }
+            }
+            return `
+                <div style="display: flex; flex-direction: row; margin-top: 32px">
+                    <div class="aligned-center" style="margin-right: 16px">
+                        <div>${icon}</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        <div style="font-size: 14pt; font-weight: bolder">${majorAttribute.name}</div>
+                        <div>${text}</div>
+                    </div>
+                </div>
+
+            `
+        }
+
+        function renderAttributeTexts(attributes) {
+            return attributes.map(att => renderAttributeText(att)).join('\n');
+        }
+
+        function renderSettings(state) {
+            if (state.settingsOpen) {
+                return`
+                    <div class="settings-dialog-background" onclick="closeSettings()"></div>
+                    <div class="settings-dialog">
+                        <div class="settings-dialgo-header">
+                            <div style="margin-top: 11px">Settings</div>
+                        </div>
+                        <div class="settings-dialgo-content">
+                            <p>
+                                Please change these settings with caution. Reset your attributes and skills after decreasing
+                                the values here.<br/>
+
+                                Default values are from the Thrall Wars Exiled Lands server.
+                            </p>
+                            <div>
+                                <div style="display: flex; flex-direction: row">
+                                    <label for="maxAttributeLevel">Max Attribute Level (Default 18)</label>
+                                    <input  style="margin-left: auto; width: 100px; margin-right: 16px" id="maxAttributeLevel"
+                                            type="number"
+                                            onchange="handleMaxAttributeLevelChange('maxAttributeLevel')"
+                                            max="40"
+                                            min="10"
+                                            value="${state.maxAttributeLevel}">
+                                </div>
+                                <div style="display: flex; flex-direction: row; margin-top: 16px">
+                                    <label for="maxAttributeLevel">Max Additional Skill Points (Default 3)</label>
+                                    <input  style="margin-left: auto; width: 100px; margin-right: 16px" id="maxAdditionalSkillPoints"
+                                            type="number"
+                                            onchange="handleMaxAdditionalSkillPointsChange('maxAdditionalSkillPoints')"
+                                            max="10"
+                                            min="1"
+                                            value="${state.maxExtraSkillPoints}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-dialog-footer aligned-center" style="display: flex">
+                            <button style="margin-left: auto; margin-right: 32px" class="close-button"
+                                    onclick="closeSettings()"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>`
+            } else {
+                return ''
+            }
+        }
+
+        /**
+         * Performs a complete re-rendering of the content
+         */
+        function renderPageContent() {
+            const attributePointsHeader = renderCurrentAttributePoints(appState);
+            const skillPointsHeader = renderCurrentSkillPoints(appState);
+            const attributePointsTable = renderMajorAttributes(
+                appState.majorAttributes,
+                appState.availableAttributePoints - appState.spentAttributePoints,
+                appState.maxAttributeLevel
+            );
+            const skillPointsTable = renderSkills(
+                appState.skills,
+                appState.availableSkillPoints - appState.spentSkillPoints,
+                appState.maxExtraSkillPoints,
+                appState.majorAttributes
+            );
+            return `
+                ${renderSettings(appState)}
+                <div style="display: flex; flex-direction: row">
+                    <div class="dice-content">
+                        <div style="display: flex; flex-direction: column">
+                            ${attributePointsHeader}
+                            <div style="width: 100%; border-bottom: 1px solid black;  margin-top:4px; margin-bottom: 8px"></div>
+                            <div> ${attributePointsTable}</div>
+                        </div>
+                         <div style="display: flex; flex-direction: column; margin-top: 24px">
+                            ${skillPointsHeader}
+                            <div style="width: 100%; border-bottom: 1px solid black; margin-top:4px; margin-bottom: 8px"></div>
+                            <div>${skillPointsTable}</div>
+                        </div>
+                    </div>
+                    <div class="character-content">
+                        <div>
+                            <h2>Your Character</h2>
+                            <p>
+                                Based on the attributes, your character could be described like this:
+                            </p>
+                            ${renderAttributeTexts(appState.majorAttributes)}
+                        </div>
+                        <div style="margin-top: auto; margin-left: auto; margin-right: 24px; font-size: 12px">
+                            <span>🐕 Attribute Descriptions by Horizon</span><br/>
+                            <span>🎲 TW Dice System by Thrall Wars Mod</span><br/>
+                            <span style="font-size: 8px; font-weight: lighter">Configured for and tested only on TW Official. <a href="https://discord.gg/Qe9kX2R" target="_blank">Join us discord</a></span><br/>
+                            <span style="font-size: 4px; font-weight: lighter">Click the Heart!</span>
+                        </div>
+                    </div>`
+        }
+
+        function reRender() {
+            document.getElementById('content-outlet').innerHTML = renderPageContent();
+        }
+
+        document.onreadystatechange = ev => reRender();
+    </script>
+</head>
+
+<body>
+    <div id="content-outlet"></div>
+</body>
+
+</html>
