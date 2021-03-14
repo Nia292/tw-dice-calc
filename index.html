@@ -362,6 +362,7 @@ SOFTWARE.
                     skill('Willpower', 'Willpower', -1, KEY_WIS),
                 ],
                 settingsOpen: false,
+                privacyOpen: false,
             }
         }
 
@@ -393,6 +394,17 @@ SOFTWARE.
 
         function closeSettings() {
             appState.settingsOpen = false;
+            reRender();
+        }
+
+
+        function closePrivacy() {
+            appState.privacyOpen = false;
+            reRender();
+        }
+
+        function openPrivacy() {
+            appState.privacyOpen = true;
             reRender();
         }
 
@@ -757,6 +769,42 @@ SOFTWARE.
             }
         }
 
+        function renderPrivacy(state) {
+            if (state.privacyOpen) {
+                return`
+                    <div class="settings-dialog-background" onclick="closePrivacy()"></div>
+                    <div class="settings-dialog">
+                        <div class="settings-dialgo-header">
+                            <div style="margin-top: 11px">Privacy Information</div>
+                        </div>
+                        <div class="settings-dialgo-content">
+                            <p>
+                                This site does not:
+                                <ul>
+                                    <li>Use cookies.</li>
+                                    <li>Track your user information.</li>
+                                    <li>Store any data on your local device besides normal browser caching.</li>
+                                </ul>
+                            </p>
+                            <p>
+                                Service provided by GitHub pages.
+                                <br/>
+                                <br/> Learn more about GH Pages <a href="https://pages.github.com/" target="_blank">here</a>
+                            </p>
+                        </div>
+                        <div class="settings-dialog-footer aligned-center" style="display: flex">
+                            <button style="margin-left: auto; margin-right: 32px" class="close-button"
+                                    onclick="closePrivacy()"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>`
+            } else {
+                return ''
+            }
+        }
+
         /**
          * Performs a complete re-rendering of the content
          */
@@ -776,6 +824,7 @@ SOFTWARE.
             );
             return `
                 ${renderSettings(appState)}
+                ${renderPrivacy(appState)}
                 <div style="display: flex; flex-direction: row">
                     <div class="dice-content">
                         <div style="display: flex; flex-direction: column">
@@ -800,6 +849,7 @@ SOFTWARE.
                         <div style="margin-top: auto; margin-left: auto; margin-right: 24px; font-size: 12px">
                             <span>🐕 Attribute Descriptions by Horizon</span><br/>
                             <span>🎲 TW Dice System by Thrall Wars Mod</span><br/>
+                            <span onclick="openPrivacy()" style="cursor: pointer">🍪 Privacy Information</span><br/>
                             <span style="font-size: 8px; font-weight: lighter">Configured for and tested only on TW Official. <a href="https://discord.gg/Qe9kX2R" target="_blank">Join us discord</a></span><br/>
                             <span style="font-size: 4px; font-weight: lighter">Click the Heart!</span>
                         </div>
