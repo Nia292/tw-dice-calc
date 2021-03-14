@@ -28,7 +28,9 @@ SOFTWARE.
     <title>Thrall Wars RP Character Planner</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+    <link rel="icon"
+          href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+
     <meta name="theme-color" content="#fafafa">
     <!-- Pretty material icons via google CDN -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -174,6 +176,18 @@ SOFTWARE.
 
         .attribute-selected {
             color: #d06721;
+        }
+
+        .bottom-info {
+            margin-top: auto;
+            margin-left: auto;
+            margin-right: 24px;
+            font-size: 12px;
+        }
+
+        .bottom-info p {
+            width: 100%;
+            text-align: right;
         }
     </style>
     <script type="application/ecmascript">
@@ -337,7 +351,7 @@ SOFTWARE.
                     majorAttribute(KEY_CHAR, 'Charisma', 8),
                 ],
                 maxExtraSkillPoints: 3,
-                availableSkillPoints: 20    ,
+                availableSkillPoints: 20,
                 spentSkillPoints: 0,
                 skills: [
                     skill('alchemy', 'Alchemy', -1, KEY_INT),
@@ -501,7 +515,7 @@ SOFTWARE.
         }
 
         function getAttributeByKey(allAttributes, key) {
-            const attribute = allAttributes.find(attribute => attribute.key ===  key);
+            const attribute = allAttributes.find(attribute => attribute.key === key);
             if (!attribute) {
                 throw new Error('Failed to find affecting attrbiute ' + attribute + '!');
             }
@@ -602,7 +616,7 @@ SOFTWARE.
             const decreaseDisabled = !canDecreaseAttribute(majorAttribute, remainingPoints, maxPoints)
             const increaseDisabledAttribute = increaseDisabled ? 'disabled' : ''
             const decreaseDisabledAttribute = decreaseDisabled ? 'disabled' : ''
-            const cssClass = majorAttribute.selected ? 'attribute-selected': '';
+            const cssClass = majorAttribute.selected ? 'attribute-selected' : '';
             return `
             <tr class="${cssClass}">
                 <td style="width: 254px;">
@@ -623,7 +637,7 @@ SOFTWARE.
             const increaseDisabledAttribute = increaseDisabled ? 'disabled' : '';
             const decreaseDisabledAttribute = decreaseDisabled ? 'disabled' : '';
             const attribute = getAttributeByKey(allAttributes, skill.affectedByAttribute)
-            const cssClass = attribute.selected ? 'attribute-selected': '';
+            const cssClass = attribute.selected ? 'attribute-selected' : '';
             return `
             <tr>
                 <td class="${cssClass}" style="width: 254px">${skill.name}</td>
@@ -722,7 +736,7 @@ SOFTWARE.
 
         function renderSettings(state) {
             if (state.settingsOpen) {
-                return`
+                return `
                     <div class="settings-dialog-background" onclick="closeSettings()"></div>
                     <div class="settings-dialog">
                         <div class="settings-dialgo-header">
@@ -771,7 +785,7 @@ SOFTWARE.
 
         function renderPrivacy(state) {
             if (state.privacyOpen) {
-                return`
+                return `
                     <div class="settings-dialog-background" onclick="closePrivacy()"></div>
                     <div class="settings-dialog">
                         <div class="settings-dialgo-header">
@@ -846,12 +860,14 @@ SOFTWARE.
                             </p>
                             ${renderAttributeTexts(appState.majorAttributes)}
                         </div>
-                        <div style="margin-top: auto; margin-left: auto; margin-right: 24px; font-size: 12px">
+                        <div class="bottom-info">
+                            <p>
+                            <span style="font-size: 15px; font-weight: lighter">Configured for and tested only on TW Official. <a href="https://discord.gg/Qe9kX2R" target="_blank">Join us discord</a></span><br/>
                             <span>🐕 Attribute Descriptions by Horizon</span><br/>
                             <span>🎲 TW Dice System by Thrall Wars Mod</span><br/>
                             <span onclick="openPrivacy()" style="cursor: pointer">🍪 Privacy Information</span><br/>
-                            <span style="font-size: 8px; font-weight: lighter">Configured for and tested only on TW Official. <a href="https://discord.gg/Qe9kX2R" target="_blank">Join us discord</a></span><br/>
                             <span style="font-size: 4px; font-weight: lighter">Click the Heart!</span>
+                            </p>
                         </div>
                     </div>`
         }
@@ -865,7 +881,7 @@ SOFTWARE.
 </head>
 
 <body>
-    <div id="content-outlet"></div>
+<div id="content-outlet"></div>
 </body>
 
 </html>
