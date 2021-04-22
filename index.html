@@ -169,6 +169,11 @@ SOFTWARE.
             font-size: 16px;
         }
 
+        .share-link {
+            padding: 8px;
+            background-color: #3e3e3e;
+        }
+
         .close-button:hover {
             cursor: pointer;
             background-color: grey;
@@ -752,6 +757,9 @@ SOFTWARE.
 
         function renderSettings(state) {
             if (state.settingsOpen) {
+                const origin = window.location.origin;
+                const shareLink = `${origin}/tw-dice-calc/?maxAttributeLevel=${state.maxAttributeLevel}&maxExtraSkillPoints=${state.maxExtraSkillPoints}`;
+
                 return `
                     <div class="settings-dialog-background" onclick="closeSettings()"></div>
                     <div class="settings-dialog">
@@ -785,6 +793,13 @@ SOFTWARE.
                                             value="${state.maxExtraSkillPoints}">
                                 </div>
                             </div>
+                            <p>
+                                You can share your current settings with this share link, e.g. if your server changed the
+                                default TW dice settings:
+                                <br/>
+                                <br/>
+                                <code class="share-link">${shareLink}</code>
+                            </p>
                         </div>
                         <div class="settings-dialog-footer aligned-center" style="display: flex">
                             <button style="margin-left: auto; margin-right: 32px" class="close-button"
@@ -893,7 +908,20 @@ SOFTWARE.
             document.getElementById('content-outlet').innerHTML = renderPageContent();
         }
 
-        document.onreadystatechange = ev => reRender();
+        function initialRender()  {
+            const urlParams = new URLSearchParams(window.location.search);
+            const maxAttributeLevel = urlParams.get("maxAttributeLevel")
+            if (maxAttributeLevel && Number.parseInt(maxAttributeLevel, 10)) {
+                appState.maxAttributeLevel = Number.parseInt(maxAttributeLevel, 10)
+            }
+            const maxExtraSkillPoints = urlParams.get("maxExtraSkillPoints")
+            if (maxExtraSkillPoints && Number.parseInt(maxExtraSkillPoints, 10)) {
+                appState.maxExtraSkillPoints = Number.parseInt(maxExtraSkillPoints, 10)
+            }
+            reRender();
+        }
+
+        document.onreadystatechange = ev => initialRender();
     </script>
 </head>
 
