@@ -53,6 +53,12 @@ SOFTWARE.
             height: 100vh;
         }
 
+        #character-name-input {
+            font-size: 24px;
+            color: white;
+            background-color: rgb(83, 83, 83);
+        }
+
         .dice-content {
             padding-left: 24px;
             padding-top: 24px;
@@ -184,6 +190,21 @@ SOFTWARE.
 
         .attribute-selected {
             color: #d06721;
+        }
+
+        #share-link-button {
+            margin-left: 8px;
+            height: 34px;
+            cursor: pointer;
+            background-color: dimgrey;
+            border: 1px solid black;
+            font-size: 16px;
+            width: 250px;
+        }
+
+        #share-link-button:hover {
+            cursor: pointer;
+            background-color: grey;
         }
 
         .bottom-info {
@@ -359,7 +380,7 @@ SOFTWARE.
             },
         }
 
-        const appState = defaultAppState();
+        let appState = defaultAppState();
 
         function defaultAppState() {
             return {
@@ -401,6 +422,7 @@ SOFTWARE.
                 ],
                 settingsOpen: false,
                 privacyOpen: false,
+                characterName: 'Your Character',
             }
         }
 
@@ -527,6 +549,20 @@ SOFTWARE.
             reRender();
         }
 
+        function copyShareLinkToClipboard() {
+            const share = JSON.stringify(appState);
+            const origin = window.location.origin;
+            const shareLink = `${origin}/tw-dice-calc/?share=${share}`;
+            navigator.clipboard.writeText(shareLink)
+            .then(() => {
+                document.getElementById('share-link-button').innerText = "Copied to Clipboard!";
+                window.location.href = shareLink;
+                setTimeout(() => {
+                    document.getElementById('share-link-button').innerText = "Copy Share Link"
+                }, 500);
+            })
+        }
+
         function handleStrengthClick() {
             // Most important feature
             attributeToTextMapping[KEY_STR].icon = `
@@ -536,6 +572,12 @@ SOFTWARE.
                          onmousedown="return false;"
                         style="cursor: pointer; font-size: 18.5px; -moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;">🐍</span>`
             reRender();
+        }
+
+        function handleNameChange() {
+            const name = document.getElementById('character-name-input').value;
+            console.log(name);
+            appState.characterName = name;
         }
 
         function getAttributeByKey(allAttributes, key) {
@@ -888,7 +930,10 @@ SOFTWARE.
                     </div>
                     <div class="character-content">
                         <div>
-                            <h2>Your Character</h2>
+                            <div style="margin-top: 8px; display: flex; flex-direction: row;">
+                                <input id="character-name-input" value="Your Character" onkeydown="handleNameChange()">
+                                <button id="share-link-button" onclick="copyShareLinkToClipboard()">Copy Share Link</button>
+                            </div>
                             <p>
                                 Based on the attributes, your character could be described like this:
                             </p>
@@ -909,10 +954,20 @@ SOFTWARE.
 
         function reRender() {
             document.getElementById('content-outlet').innerHTML = renderPageContent();
+            document.getElementById('character-name-input').value = appState.characterName;
         }
 
         function initialRender()  {
             const urlParams = new URLSearchParams(window.location.search);
+            const shareLink = urlParams.get("share");
+            // Might have a share link. If so, we write that first, writing the other params afterwards
+            if (shareLink) {
+                try {
+                    appState = JSON.parse(shareLink);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
             const maxAttributeLevel = urlParams.get("maxAttributeLevel")
             if (maxAttributeLevel && Number.parseInt(maxAttributeLevel, 10)) {
                 appState.maxAttributeLevel = Number.parseInt(maxAttributeLevel, 10)
@@ -921,6 +976,7 @@ SOFTWARE.
             if (maxExtraSkillPoints && Number.parseInt(maxExtraSkillPoints, 10)) {
                 appState.maxExtraSkillPoints = Number.parseInt(maxExtraSkillPoints, 10)
             }
+
             reRender();
         }
 
