@@ -199,10 +199,19 @@ SOFTWARE.
         body {
             margin: 0px;
             overflow: hidden;
-            background-image: url("https://aws1.discourse-cdn.com/funcom/original/1X/6f45dd8c9a5cb28b8cf68908472b4a2cabd41382.jpg");
+            background: linear-gradient(
+                    rgba(0, 0, 0, 0.8),
+                    rgba(0, 0, 0, 0.8)
+            ),
+            url("https://www.conanexiles.com/wp-content/uploads/sites/5/2019/11/Swamp6.jpg");
             background-position: center;
             background-repeat: no-repeat;
             background-size: cover;
+        }
+
+        body:after {
+            background: rgba(0, 0, 0, 1);
+            opacity: 1;
         }
 
         #content-outlet {
